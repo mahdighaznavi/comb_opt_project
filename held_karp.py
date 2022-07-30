@@ -1,9 +1,7 @@
 import maxflow
 import numpy as np
 from scipy import optimize
-
-MMAX = 0.99999
-INF = 9999999
+from constants import MMAX, INF
 
 
 # %%
@@ -147,4 +145,3 @@ def held_karp(A_eq, b_eq, A_ub, b_ub, c, sz):
         print(x_star.fun)
 
     return x_star.fun, x_star.x
-
