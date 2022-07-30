@@ -13,4 +13,5 @@ def get_adjacency_matrix(file_path):
         while len(e[-1]) < dimension:
             e[-1].extend(map(int, f.readline().split()))
 
+    f.close()
     return e, dimension
