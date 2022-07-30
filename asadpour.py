@@ -1,23 +1,13 @@
 from held_karp import held_karp
+import numpy as np
 
 
-def make_matrices_from_file(file_path):
-    a = open(file_path)
-    a.readline()
-    a.readline()
-    a.readline()
-    dimension = int(a.readline().split()[1])
-    while a.readline().strip() != "EDGE_WEIGHT_SECTION":
-        continue
-    e = []
+def make_matrices_from_file(M, n):
+    dimension = n
     c = []
     for i in range(dimension):
-        e.append([])
-        while len(e[-1]) < dimension:
-            tmp = map(int, a.readline().split())
-            for t in tmp:
-                c.append(t)
-                e[-1].append(t)
+        for j in range(dimension):
+            c.append(M[i][j])
 
     b_eq = np.zeros(2 * dimension, dtype=int)
     A_eq = np.zeros((2 * dimension, dimension * dimension), dtype=int)
@@ -39,9 +29,9 @@ def make_matrices_from_file(file_path):
     for i in range(dimension * dimension):
         A_ub[-1].append(0)
 
-    return A_eq, b_eq, A_ub, b_ub, c, dimension, e
+    return A_eq, b_eq, A_ub, b_ub, c, dimension
 
 
-def asadpour(file_path):
-    A_eq, b_eq, A_ub, b_ub, c, sz, M = make_matrices_from_file(file_path)
-    held_karp(A_eq, b_eq, A_ub, b_ub, c, sz)
+def asadpour(M, n):
+    A_eq, b_eq, A_ub, b_ub, c, sz = make_matrices_from_file(M, n)
+    return held_karp(A_eq, b_eq, A_ub, b_ub, c, sz)

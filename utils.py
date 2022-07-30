@@ -4,7 +4,6 @@ def get_adjacency_matrix(file_path):
     f.readline()
     f.readline()
     dimension = int(f.readline().split()[1])
-    print(dimension)
     while f.readline().strip() != "EDGE_WEIGHT_SECTION":
         continue
     e = []

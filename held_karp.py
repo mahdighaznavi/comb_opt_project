@@ -146,6 +146,5 @@ def held_karp(A_eq, b_eq, A_ub, b_ub, c, sz):
 
         print(x_star.fun)
 
-    print(x_star.fun)
-    print(x_star.x)
+    return x_star.fun, x_star.x
 
