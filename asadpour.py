@@ -2,7 +2,7 @@ from held_karp import held_karp
 import numpy as np
 
 
-def make_matrices_from_file(M, n):
+def make_initial_constraints(M, n):
     dimension = n
     c = []
     for i in range(dimension):
@@ -33,5 +33,5 @@ def make_matrices_from_file(M, n):
 
 
 def asadpour(M, n):
-    A_eq, b_eq, A_ub, b_ub, c, sz = make_matrices_from_file(M, n)
+    A_eq, b_eq, A_ub, b_ub, c, sz = make_initial_constraints(M, n)
     return held_karp(A_eq, b_eq, A_ub, b_ub, c, sz)

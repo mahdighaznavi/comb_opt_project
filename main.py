@@ -3,8 +3,8 @@ import sys
 import FGM
 from asadpour import asadpour
 from utils import get_adjacency_matrix
-f = open('nul', 'w')
-sys.stderr = f
+# f = open('nul', 'w')
+# sys.stderr = f
 available_tests = ['br17.atsp', 'ft53.atsp', 'ft70.atsp', 'ftv170.atsp', 'ftv33.atsp', 'ftv35.atsp', 'ftv38.atsp',
                    'ftv44.atsp', 'ftv47.atsp', 'ftv55.atsp', 'ftv64.atsp', 'ftv70.atsp', 'kro124p.atsp', 'p43.atsp',
                    'rbg323.atsp', 'rbg358.atsp', 'rbg403.atsp', 'rbg443.atsp', 'ry48p.atsp']

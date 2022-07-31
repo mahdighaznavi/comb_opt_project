@@ -130,7 +130,7 @@ def make_graph(edges, size):
     return g
 
 
-def held_karp(A_eq, b_eq, A_ub, b_ub, c, sz):
+def held_karp(A_eq, b_eq, A_ub, b_ub, c, sz, return_complete=False):
     x_star = solve_LP(c=c, A_eq=A_eq, b_eq=b_eq, A_ub=A_ub, b_ub=b_ub)
     mg = make_graph(x_star.x, sz)
     while min_cut(mg, sz) < MMAX:
@@ -143,5 +143,7 @@ def held_karp(A_eq, b_eq, A_ub, b_ub, c, sz):
         mg = make_graph(x_star.x, sz)
 
         print(x_star.fun)
-
-    return x_star.fun, x_star.x
+    if return_complete:
+        return x_star, A_ub, b_ub
+    else:
+        return x_star.fun, x_star.x
