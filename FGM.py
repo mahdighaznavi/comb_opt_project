@@ -1,9 +1,11 @@
 # %%
 import numpy as np
 from scipy import optimize
+
 from constants import INF
 
 
+# %%
 def minimum_Matching(graph, sz):
     row_ind, col_ind = optimize.linear_sum_assignment(graph)
     nodes = []
@@ -12,82 +14,72 @@ def minimum_Matching(graph, sz):
     x = 0
     for i in range(sz):
         t = i
-        if (mark[t] == 0):
+        if mark[t] == 0:
             x += 1
-        while (not mark[t]):
+        while not mark[t]:
             comp[t] = x - 1
             nodes.append(t)
             mark[t] = 1
             t = col_ind[t] - sz
-    cost = graph[row_ind, col_ind].sum()
-    return cost, nodes, comp
+    return nodes, comp
 
 
 # %%
 def split_Graph(graph, sz):
-    new_Graph = np.zeros((2 * sz, 2 * sz), dtype=int)
+    new_graph = np.zeros((2 * sz, 2 * sz), dtype=int)
     for i in range(sz):
         for j in range(sz):
-            new_Graph[i][j] = INF
+            new_graph[i][j] = INF
     for i in range(sz):
         for j in range(sz):
-            new_Graph[i][sz + j] = graph[i][j]
-    return new_Graph
+            new_graph[i][sz + j] = graph[i][j]
+    return new_graph
 
 
 # %%
 def contract(graph, comp, sz):
-    newSz = 0
+    new_sz = 0
     for i in range(sz):
-        newSz = max(newSz, comp[i])
-    newSz += 1
-    newG = np.zeros((newSz, newSz), dtype=int)
-    for i in range(newSz):
-        newG[i][i] = INF
-    in_Edges = np.zeros(newSz, dtype=int)
+        new_sz = max(new_sz, comp[i])
+    new_sz += 1
+    new_g = np.zeros((new_sz, new_sz), dtype=int)
+    for i in range(new_sz):
+        new_g[i][i] = INF
+    in_edges = np.zeros(new_sz, dtype=int)
     for i in range(sz):
         for j in range(sz):
             if comp[i] != comp[j]:
-                if (graph[i][j] > newG[comp[i]][comp[j]]):
-                    newG[comp[i]][comp[j]] = graph[i][j]
-                    in_Edges[comp[j]] = j
-    return newG, in_Edges, newSz
+                if graph[i][j] > new_g[comp[i]][comp[j]]:
+                    new_g[comp[i]][comp[j]] = graph[i][j]
+                    in_edges[comp[j]] = j
+    return new_g, in_edges, new_sz
 
 
 # %%
 def solve(graph, sz):
-    tsp_List = []
-    cost, nodes, comp = minimum_Matching(split_Graph(graph, sz), sz)
-    newGraph, in_Edges, newSz = contract(graph, comp, sz)
-    if (newSz == 1):
-        return nodes, cost
-    added = 0
+    tsp_list = []
+    nodes, comp = minimum_Matching(split_Graph(graph, sz), sz)
+    new_graph, in_edges, new_sz = contract(graph, comp, sz)
+    if new_sz == 1:
+        return nodes, 0
+    new_list, _ = solve(new_graph, new_sz)
     mark = np.zeros(sz, dtype=int)
-    for i in range(newSz):
-        if i == newSz - 1:
-            added += graph[in_Edges[i]][in_Edges[0]]
+    for i in range(new_sz):
+        x = 0
+        for j in range(sz):
+            if comp[nodes[j]] == new_list[i]:
+                x = j
+                break
+        while comp[nodes[x]] == new_list[i]:
+            mark[nodes[x]] = 1
+            tsp_list.append(nodes[x])
+            x += 1
+            if x == sz:
+                break
+    answer = 0
+    for i in range(sz):
+        if i == sz - 1:
+            answer += graph[tsp_list[sz - 1]][tsp_list[0]]
         else:
-            added += graph[in_Edges[i]][in_Edges[i + 1]]
-        x = in_Edges[i]
-        st = 0
-        en = 0
-        for j in range(sz):
-            if nodes[j] == x:
-                st = j
-                en = j
-        while (comp[nodes[st]] == i):
-            mark[nodes[st]] = 1
-            tsp_List.append(nodes[st])
-            st += 1
-            if (st == sz):
-                break
-        for j in range(sz):
-            if comp[nodes[j]] == i:
-                en = j
-                break
-        while (mark[nodes[en]] == 0):
-            mark[nodes[en]] = 1
-            tsp_List.append(nodes[en])
-            en += 1
-    new_List, newCost = solve(newGraph, newSz)
-    return tsp_List, cost + added + newCost
+            answer += graph[tsp_list[i]][tsp_list[i + 1]]
+    return tsp_list, answer
