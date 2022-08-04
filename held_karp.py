@@ -133,17 +133,25 @@ def make_graph(edges, size):
 def held_karp(A_eq, b_eq, A_ub, b_ub, c, sz, return_complete=False):
     x_star = solve_LP(c=c, A_eq=A_eq, b_eq=b_eq, A_ub=A_ub, b_ub=b_ub)
     mg = make_graph(x_star.x, sz)
+    if return_complete:
+        nodes = [[]]
+        for i in range(sz):
+            nodes[0].append(0)
     while min_cut(mg, sz) < MMAX:
         T = find_violated_cut(mg, sz)
         if len(T) < 1:
             break
         b_ub.append(-1)
         A_ub.append(add_violated_constraint(T, sz))
+        if return_complete:
+            nodes.append(np.zeros(sz))
+            for t in T:
+                nodes[-1][t] = 1
         x_star = solve_LP(c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq)
         mg = make_graph(x_star.x, sz)
 
         print(x_star.fun)
     if return_complete:
-        return x_star, A_ub, b_ub
+        return x_star, A_ub, b_ub, np.array(nodes)
     else:
         return x_star.fun, x_star.x
