@@ -1,0 +1,6 @@
+matplotlib==3.3.2
+maxflow==0.0.1
+networkx==2.8.4
+numpy==1.19.2
+PyMaxflow==1.2.13
+scipy==1.5.2
