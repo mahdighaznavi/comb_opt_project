@@ -31,8 +31,6 @@ while inp != "exit":
     if inp.isdigit() and 1 <= inp.isdigit() <= len(available_tests):
         M, n = get_adjacency_matrix("tests/" + available_tests[int(inp) - 1])
         print("Solution: " + str(solutions[available_tests[int(inp) - 1][:-5]]))
-        # STV.solve(M, n, Epsilon)
-        # exit()
         print("FGM upper bound")
         vertex_list, answer = FGM.solve(M, n)
         print(answer)
@@ -56,6 +54,8 @@ while inp != "exit":
         tmp = asadpour(M, n)
         print("Asadpour upper bound")
         print(tmp)
+        print("STV")
+        print(STV.solve(M, n, Epsilon))
 
     print("please enter the next test number")
     inp = input().strip()
