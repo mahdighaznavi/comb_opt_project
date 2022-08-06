@@ -1,8 +1,16 @@
 import sys
 
 import FGM
+
+import STV
 from asadpour import asadpour
 from utils import get_adjacency_matrix
+from constants import Epsilon
+import networkx as nx
+import numpy as np
+import matplotlib.pyplot as plt
+import pylab
+
 # f = open('nul', 'w')
 # sys.stderr = f
 available_tests = ['br17.atsp', 'ft53.atsp', 'ft70.atsp', 'ftv170.atsp', 'ftv33.atsp', 'ftv35.atsp', 'ftv38.atsp',
@@ -23,15 +31,31 @@ while inp != "exit":
     if inp.isdigit() and 1 <= inp.isdigit() <= len(available_tests):
         M, n = get_adjacency_matrix("tests/" + available_tests[int(inp) - 1])
         print("Solution: " + str(solutions[available_tests[int(inp) - 1][:-5]]))
-        print("FGM:")
+        # STV.solve(M, n, Epsilon)
+        # exit()
+        print("FGM upper bound")
         vertex_list, answer = FGM.solve(M, n)
         print(answer)
         print(vertex_list)
-        print("Held-Karp lower bound")
-        try:
-            print(asadpour(M, n)[0])
-        except:
-            print("Too large for running Held-Karp")
+        G = nx.DiGraph()
+        nodes = np.arange(0, n).tolist()
+        G.add_nodes_from(nodes)
+        for i in range(len(vertex_list)):
+            u = vertex_list[i]
+            v = vertex_list[(i + 1) % len(vertex_list)]
+            G.add_edges_from([(u, v)], weight=M[u][v])
+        pos = nx.circular_layout(G)
+        edge_labels = dict([((u, v,), d['weight'])
+                            for u, v, d in G.edges(data=True)])
+        nx.draw_networkx_nodes(G, pos, cmap=plt.get_cmap('jet'), node_size=5)
+        nx.draw_networkx_labels(G, pos, font_size=5)
+        nx.draw_networkx_edges(G, pos)
+        nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=5)
+        pylab.show()
+        print("Held-Karp lower bound:")
+        tmp = asadpour(M, n)
+        print("Asadpour upper bound")
+        print(tmp)
 
     print("please enter the next test number")
     inp = input().strip()

@@ -22,19 +22,42 @@ def dfs(graph, mark, x, v, sz):
 # %%
 def make_components(graph, comp, sz):
     new_sz = 0
+    cnt = 0
     for i in range(sz):
+        if comp[i] == 0:
+            cnt += 1
         new_sz = max(new_sz, comp[i])
-    new_sz += 1
+    new_sz += cnt
+    ind = np.zeros(sz, dtype=int)
+    bef = 0
+    for i in range(sz):
+        if comp[i] != 0:
+            bef += 1
+            ind[i] = cnt + comp[i] - 1
+        else:
+            ind[i] = i - bef
     new_g = np.zeros((new_sz, new_sz), dtype=int)
     for i in range(sz):
-        for j in range(sz):
-            if comp[i] != comp[j]:
-                new_g[comp[i]][comp[j]] += graph[i][j]
-    return new_g, new_sz
+        for j in range(i + 1, sz):
+            if not ((i, j) in graph.keys()):
+                continue
+            if comp[i] == 0 and comp[j] == 0:
+                new_g[ind[i]][ind[j]] -= exp(graph[(i, j)])
+                new_g[ind[i]][ind[i]] += exp(graph[(i, j)])
+                new_g[ind[j]][ind[j]] += exp(graph[(i, j)])
+            elif comp[i] != comp[j]:
+                new_g[ind[i]][ind[j]] -= exp(graph[(i, j)])
+                new_g[ind[i]][ind[i]] += exp(graph[(i, j)])
+                new_g[ind[j]][ind[j]] += exp(graph[(i, j)])
+    temp = np.zeros((new_sz - 1, new_sz - 1), dtype=int)
+    for i in range(new_sz - 1):
+        for j in range(new_sz - 1):
+            temp[i][j] = new_g[i + 1][j + 1]
+    return np.linalg.det(temp)
 
 
 # %%
-def maek_U_V_Graph(U, V, sz):
+def make_U_V_Graph(gamma, U, V, sz):
     mark = np.zeros(sz, dtype=int)
     x = 1
     for i in range(sz):
@@ -47,8 +70,13 @@ def maek_U_V_Graph(U, V, sz):
         if flag > 0:
             dfs(U, mark, x, i, sz)
             x += 1
-    new_graph, new_sz = make_components(V, mark, sz)
-    return new_graph, new_sz
+    dic_graph = {}
+    for i in range(sz):
+        for j in range(i + 1, sz):
+            if V[i][j] == 1:
+                dic_graph[(i, j)] = gamma[(i, j)]
+    new_graph = make_components(dic_graph, mark, sz)
+    return new_graph
 
 
 # %%
@@ -63,19 +91,23 @@ def laplacian(gamma, sz):
                 for k in range(sz):
                     if k == i:
                         continue
-                    if (k, i) in gamma.keys():
-                        s += exp(gamma[(k, i)])
                     if (i, k) in gamma.keys():
                         s += exp(gamma[(i, k)])
+                    if (k, i) in gamma.keys():
+                        s += exp(gamma[(k, i)])
                 L[i - 1][j - 1] = s
     return np.linalg.det(L)
 
 
 # %%
 def contract_Edge(graph, nodes, sz):
-    new_g = np.zeros((sz - 1, sz - 1), dtype=int)
+    new_graph = np.zeros((sz - 1, sz - 1), dtype=int)
     for i in range(sz):
         for j in range(i + 1, sz):
+            if not ((i, j) in graph.keys()):
+                continue
+            if (i == nodes[0]) and (j == nodes[1]):
+                continue
             s = i
             t = j
             if nodes[0] < s:
@@ -87,37 +119,59 @@ def contract_Edge(graph, nodes, sz):
             if nodes[0] < t:
                 t -= 1
             if (not (i in nodes)) and (not (j in nodes)):
-                new_g[s][t] = graph[i][j]
-                new_g[t][s] = graph[i][j]
-            if (i == nodes[0]) and (j != nodes[1]):
-                new_g[s][sz - 1] += graph[i][j]
-                new_g[sz - 1][s] += graph[i][j]
-            if (i != nodes[0]) and (j == nodes[1]):
-                new_g[t][sz - 1] += graph[i][j]
-                new_g[sz - 1][t] += graph[i][j]
-    return new_g
+                new_graph[s][t] -= exp(graph[(i, j)])
+                new_graph[s][s] += exp(graph[(i, j)])
+                new_graph[t][t] += exp(graph[(i, j)])
+            elif (i == nodes[0]) and (j != nodes[1]):
+                new_graph[t][sz - 2] -= exp(graph[(i, j)])
+                new_graph[t][t] += exp(graph[(i, j)])
+                new_graph[sz - 2][sz - 2] += exp(graph[(i, j)])
+            elif (i != nodes[0]) and (j == nodes[1]):
+                new_graph[s][sz - 2] -= exp(graph[(i, j)])
+                new_graph[s][s] += exp(graph[(i, j)])
+                new_graph[sz - 2][sz - 2] += exp(graph[(i, j)])
+            elif i == nodes[1]:
+                new_graph[t][sz - 2] -= exp(graph[(i, j)])
+                new_graph[t][t] += exp(graph[(i, j)])
+                new_graph[sz - 2][sz - 2] += exp(graph[(i, j)])
+            elif j == nodes[0]:
+                new_graph[s][sz - 2] -= exp(graph[(i, j)])
+                new_graph[s][s] += exp(graph[(i, j)])
+                new_graph[sz - 2][sz - 2] += exp(graph[(i, j)])
+    for i in range(sz - 1):
+        for j in range(i + 1, sz - 1):
+            new_graph[j][i] = new_graph[i][j]
+    temp = np.zeros((sz - 2, sz - 2), dtype=int)
+    for i in range(sz - 2):
+        for j in range(sz - 2):
+            temp[i][j] = new_graph[i + 1][j + 1]
+    return np.linalg.det(temp)
 
 
 # %%
-def q(gamma, sz):
-    return (laplacian(gamma, sz)) / (laplacian(gamma, sz))
+def q(e, gamma, sz):
+    return (contract_Edge(gamma, e, sz)) / (laplacian(gamma, sz))
 
 
 # %%
 def spanning_Tree_Distribution(z, sz):
     gamma = {}
+    epsilon = 0.2
     for i in range(sz):
         for j in range(i + 1, sz):
+            if not ((i, j) in z.keys()):
+                continue
             gamma[(i, j)] = 0
-    epsilon = 0.2
     while True:
         flag = 0
         for i in range(sz):
             for j in range(i + 1, sz):
                 e = (i, j)
-                q_e = q(gamma, sz)
+                if not (e in gamma.keys()):
+                    continue
+                q_e = q(e, gamma, sz)
                 z_e = z[e]
-                if q_e > (1 + epsilon) * z_e:
+                if q_e > ((1 + epsilon) * z_e):
                     flag += 1
                     delta = ln((q_e * (1 - (1 + epsilon / 2) * z_e)) / ((1 - q_e) * (1 + epsilon / 2) * z_e))
                     gamma[e] -= delta
@@ -139,20 +193,18 @@ def sample_Tree(graph, gamma, sz):
     cnt = 0
     for i in range(len(edges)):
         e = edges[i]
-        g, new_sz = maek_U_V_Graph(u, v, sz)
-        a = laplacian(gamma, new_sz)
-        u[e[0]][e[1]] = 1
-        g, new_sz = maek_U_V_Graph(u, v, sz)
-        a_prime = laplacian(gamma, new_sz)
-        u[e[0]][e[1]] = 0
+        a = make_U_V_Graph(gamma, u, v, sz)
+        u[e // sz][e % sz] = 1
+        a_prime = make_U_V_Graph(gamma, u, v, sz)
+        u[e // sz][e % sz] = 0
         z = random.uniform(0, 1)
-        if z <= (gamma[e] * a_prime / a):
-            u[e[0]][e[1]] = 1
+        if z <= (1 * a_prime / a):
+            u[e // sz][e % sz] = 1
             cnt += 1
             if cnt == sz - 1:
                 break
         else:
-            v[e[0]][e[1]] = v[e[1]][e[0]] = 0
+            v[e // sz][e % sz] = v[e % sz][e // sz] = 0
     return u
 
 
@@ -161,6 +213,8 @@ def direct_Tree(c, graph, sz):
     s = 0
     for i in range(sz):
         for j in range(i + 1, sz):
+            if graph[i][j] == 0:
+                continue
             u = i * sz + j
             v = j * sz + i
             if c[u] < c[v]:
@@ -193,7 +247,9 @@ def make_Answer_From_X(c, x, graph, sz):
     z = {}
     for i in range(sz):
         for j in range(i + 1, sz):
-            z[(i, j)] = (sz - 1) / sz * (x[i][j] + x[j][i])
+            if (x[i * sz + j] + x[j * sz + i]) < 1e-9:
+                continue
+            z[(i, j)] = (sz - 1) / sz * (x[i * sz + j] + x[j * sz + i])
     gamma = spanning_Tree_Distribution(z, sz)
     v = np.zeros((sz, sz), dtype=int)
     for i in range(sz):
@@ -204,6 +260,8 @@ def make_Answer_From_X(c, x, graph, sz):
     final = np.zeros((sz, sz), dtype=int)
     for i in range(math.ceil(6 * math.log(sz))):
         temp = sample_Tree(v, gamma, sz)
+        if len(temp) < sz - 1:
+            continue
         temp_g, temp_cost = direct_Tree(c, temp, sz)
         if temp_cost < cost:
             cost = temp_cost
@@ -215,7 +273,7 @@ def make_Answer_From_X(c, x, graph, sz):
     for i in range(sz):
         for j in range(sz):
             g.add_edge(i, j, weight=graph[i][j])
-    flow_dict = nx.min_cost_flow(g)
+    flow_dict = nx.min_cost_flow_cost(g)
     return flow_dict
 
 
@@ -252,4 +310,4 @@ def make_initial_constraints(M, n):
 def asadpour(M, n):
     A_eq, b_eq, A_ub, b_ub, c, sz = make_initial_constraints(M, n)
     _, x = held_karp(A_eq, b_eq, A_ub, b_ub, c, sz)
-    return make_Answer_From_X(c, np.array(x).reshape((sz, sz)), M, sz)
+    return make_Answer_From_X(c, x, M, sz)
